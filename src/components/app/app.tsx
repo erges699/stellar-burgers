@@ -14,12 +14,27 @@ import '../../index.css';
 import styles from './app.module.css';
 import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
 import { ProtectedRoute } from '../protected-route';
-//import { useDispatch } from 'src/services/store';
-//import { getIngr } from '@slices';
+import { useDispatch } from '@store';
+import {
+  getIngredientsThunk,
+  getUserStateSelector,
+  getUserThunk
+} from '@slices';
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { Preloader } from '../ui/preloader';
 
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+  const userLoading = useSelector(getUserStateSelector).isLoadong;
+  const backgroundLocation = location.state?.background;
+
+  useEffect(() => {
+    dispatch(getUserThunk());
+    dispatch(getIngredientsThunk());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
@@ -27,12 +42,18 @@ const App = () => {
       <Routes>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
-
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/reset-password' element={<ResetPassword />} />
-
+        <Route element={<ProtectedRoute forAuthorized={false} />}>
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
+          <Route path='/forgot-password' element={<ForgotPassword />} />
+          <Route path='/reset-password' element={<ResetPassword />} />
+        </Route>
+        <Route element={<ProtectedRoute forAuthorized />}>
+          <Route path='/profile'>
+            <Route index element={<Profile />} />
+            <Route path='orders' element={<ProfileOrders />} />
+          </Route>
+        </Route>
         <Route path='*' element={<NotFound404 />} />
       </Routes>
       <Routes>

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from '../../services/store';
-import { isAuthorizedSelector } from '../../slices/userSlice';
+import { isAuthorizedSelector } from '../../services/slices/userSlice';
 
 type ProtectedRouteProps = {
   forAuthorized: boolean;
