@@ -34,9 +34,6 @@ export const ordersSlice = createSlice({
   },
   selectors: {},
   extraReducers: (builder) => {
-    /**
-     * orderBurgerApiAsync
-     */
     builder
       .addCase(orderBurgerApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -54,9 +51,6 @@ export const ordersSlice = createSlice({
         state.orderRequest = false;
       });
 
-    /**
-     * getOrderByNumberApiAsync
-     */
     builder
       .addCase(getOrderByNumberApiAsync.pending, (state) => {
         state.isLoading = true;

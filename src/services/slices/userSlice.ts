@@ -114,9 +114,6 @@ export const userSlice = createSlice({
   reducers: {},
   selectors: {},
   extraReducers: (builder) => {
-    /**
-     * getOrdersApiAsync
-     */
     builder
       .addCase(getOrdersApiAsync.pending, (state) => {
         state.orderLoading = true;
@@ -131,9 +128,6 @@ export const userSlice = createSlice({
         state.orders = action.payload;
       });
 
-    /**
-     * registerUserApiAsync
-     */
     builder
       .addCase(registerUserApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -149,9 +143,6 @@ export const userSlice = createSlice({
         state.isAuthorized = true;
       });
 
-    /**
-     * loginUserApiAsync
-     */
     builder
       .addCase(loginUserApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -167,9 +158,6 @@ export const userSlice = createSlice({
         state.isAuthorized = true;
       });
 
-    /**
-     * logoutUserApiAsync
-     */
     builder
       .addCase(logoutUserApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -185,9 +173,6 @@ export const userSlice = createSlice({
         state.isAuthorized = false;
       });
 
-    /**
-     * checkUserAuthAsync
-     */
     builder
       .addCase(checkUserAuthAsync.pending, (state) => {
         state.isLoading = true;
@@ -205,9 +190,6 @@ export const userSlice = createSlice({
         state.isAuthorized = action.payload != null;
       });
 
-    /**
-     * updateUserApiAsync
-     */
     builder
       .addCase(updateUserApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -222,9 +204,6 @@ export const userSlice = createSlice({
         state.user = action.payload.user;
       });
 
-    /**
-     * forgotPasswordApiAsync
-     */
     builder
       .addCase(forgotPasswordApiAsync.pending, (state) => {
         state.isLoading = true;
@@ -238,9 +217,6 @@ export const userSlice = createSlice({
         state.isLoading = false;
       });
 
-    /**
-     * resetPasswordApiAsync
-     */
     builder
       .addCase(resetPasswordApiAsync.pending, (state) => {
         state.isLoading = true;
