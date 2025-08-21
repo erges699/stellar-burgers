@@ -1,5 +1,5 @@
 import { expect, test, describe } from '@jest/globals';
-import { rootReducer } from '@store';
+import { rootReducer } from '../src/services/store';
 import {
   userInitialState,
   orderInitialState,

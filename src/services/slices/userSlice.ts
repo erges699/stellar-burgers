@@ -11,7 +11,7 @@ import {
   resetPasswordApi,
   TLoginData,
   TRegisterData
-} from '@api';
+} from '../../utils/burger-api';
 import { deleteCookie, getCookie, setCookie } from '../../utils/cookie';
 
 type TUserState = {

@@ -1,14 +1,14 @@
 import { expect, test, describe } from '@jest/globals';
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer, {
-  loginUserThunk,
-  registerUserThunk,
-  logoutUserThunk,
-  updateUserThunk,
-  forgotPasswordThunk,
-  resetPasswordThunk,
-  getUserThunk
-} from './userSlice';
+  loginUserApiAsync,
+  registerUserApiAsync,
+  logoutUserApiAsync,
+  updateUserApiAsync,
+  forgotPasswordApiAsync,
+  resetPasswordApiAsync,
+  checkUserAuthAsync
+} from '../src/services/slices/userSlice';
 
 const setupStore = () =>
   configureStore({
@@ -23,20 +23,20 @@ describe('Тесты экшенов клиента', () => {
   describe('Тесты экшена запроса логина', () => {
     test('Тест экшена ожидания ответ после запроса логина', () => {
       const store = setupStore();
-      store.dispatch({ type: loginUserThunk.pending.type });
+      store.dispatch({ type: loginUserApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса логина', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: loginUserThunk.rejected.type,
+        type: loginUserApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного логина', () => {
@@ -52,11 +52,11 @@ describe('Тесты экшенов клиента', () => {
       };
       const store = setupStore();
       store.dispatch({
-        type: loginUserThunk.fulfilled.type,
+        type: loginUserApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toEqual(mockedPayload.user);
       expect(state.user.isAuthorized).toBeTruthy();
@@ -66,20 +66,20 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса регистрации', () => {
     test('Тест экшена ожидания ответ после запроса регистрации', () => {
       const store = setupStore();
-      store.dispatch({ type: registerUserThunk.pending.type });
+      store.dispatch({ type: registerUserApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса регистрации', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: registerUserThunk.rejected.type,
+        type: registerUserApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешной регистрации', () => {
@@ -89,17 +89,17 @@ describe('Тесты экшенов клиента', () => {
         refreshToken:
           'cae7fbb0ce188f2c244e611b328ae4869b892902b1ba10c81cee99194854b1d3c192e0bfc9b90b06',
         user: {
-          email: 'lleksiv@gmail.com',
-          name: 'Georg Shakillow'
+          email: 'test20280815@mail.ru',
+          name: 'test20280815'
         }
       };
       const store = setupStore();
       store.dispatch({
-        type: registerUserThunk.fulfilled.type,
+        type: registerUserApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toEqual(mockedPayload.user);
       expect(state.user.isAuthorized).toBeTruthy();
@@ -109,20 +109,20 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса логаута', () => {
     test('Тест экшена ожидания ответ после запроса логаута', () => {
       const store = setupStore();
-      store.dispatch({ type: logoutUserThunk.pending.type });
+      store.dispatch({ type: logoutUserApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса логаута', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: logoutUserThunk.rejected.type,
+        type: logoutUserApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного логаута', () => {
@@ -131,11 +131,11 @@ describe('Тесты экшенов клиента', () => {
       };
       const store = setupStore();
       store.dispatch({
-        type: logoutUserThunk.fulfilled.type,
+        type: logoutUserApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toBeNull();
       expect(state.user.isAuthorized).toBeFalsy();
@@ -145,36 +145,36 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса изменения данных клиента', () => {
     test('Тест экшена ожидания ответ после запроса изменения данных клиента', () => {
       const store = setupStore();
-      store.dispatch({ type: updateUserThunk.pending.type });
+      store.dispatch({ type: updateUserApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса изменения данных клиента', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: updateUserThunk.rejected.type,
+        type: updateUserApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного изменения данных клиента', () => {
       const mockedPayload = {
         user: {
-          email: 'lleksiv@gmail.com',
-          name: 'Georg Shakillow'
+          email: 'test20280815@mail.ru',
+          name: 'test20280815'
         }
       };
       const store = setupStore();
       store.dispatch({
-        type: updateUserThunk.fulfilled.type,
+        type: updateUserApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toEqual(mockedPayload.user);
       expect(state.user.isAuthorized).toBeTruthy();
@@ -184,20 +184,20 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса восстановления пароля', () => {
     test('Тест экшена ожидания ответ после запроса восстановления пароля', () => {
       const store = setupStore();
-      store.dispatch({ type: forgotPasswordThunk.pending.type });
+      store.dispatch({ type: forgotPasswordApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса восстановления пароля', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: forgotPasswordThunk.rejected.type,
+        type: forgotPasswordApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного восстановления пароля', () => {
@@ -206,11 +206,11 @@ describe('Тесты экшенов клиента', () => {
       };
       const store = setupStore();
       store.dispatch({
-        type: forgotPasswordThunk.fulfilled.type,
+        type: forgotPasswordApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toBeNull();
       expect(state.user.isAuthorized).toBeFalsy();
@@ -220,20 +220,20 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса изменения пароля', () => {
     test('Тест экшена ожидания ответ после запроса изменения пароля', () => {
       const store = setupStore();
-      store.dispatch({ type: resetPasswordThunk.pending.type });
+      store.dispatch({ type: resetPasswordApiAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса изменения пароля', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: resetPasswordThunk.rejected.type,
+        type: resetPasswordApiAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного изменения пароля', () => {
@@ -242,11 +242,11 @@ describe('Тесты экшенов клиента', () => {
       };
       const store = setupStore();
       store.dispatch({
-        type: resetPasswordThunk.fulfilled.type,
+        type: resetPasswordApiAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toBeNull();
       expect(state.user.isAuthorized).toBeFalsy();
@@ -256,36 +256,36 @@ describe('Тесты экшенов клиента', () => {
   describe('Тест экшена запроса данных пользователя', () => {
     test('Тест экшена ожидания ответ после запроса данных пользователя', () => {
       const store = setupStore();
-      store.dispatch({ type: getUserThunk.pending.type });
+      store.dispatch({ type: checkUserAuthAsync.pending.type });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeTruthy();
+      expect(state.user.isLoading).toBeTruthy();
       expect(state.user.error).toBeNull();
     });
     test('Тест экшена ошибки после запроса данных пользователя', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: getUserThunk.rejected.type,
+        type: checkUserAuthAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBe(error);
     });
     test('Тест экшена успешного запроса данных пользователя', () => {
       const mockedPayload = {
         user: {
-          email: 'lleksiv@gmail.com',
-          name: 'Georg Shakillow'
+          email: 'test20280815@mail.ru',
+          name: 'test20280815'
         }
       };
       const store = setupStore();
       store.dispatch({
-        type: getUserThunk.fulfilled.type,
+        type: checkUserAuthAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();
-      expect(state.user.isLoadong).toBeFalsy();
+      expect(state.user.isLoading).toBeFalsy();
       expect(state.user.error).toBeNull();
       expect(state.user.user).toEqual(mockedPayload.user);
       expect(state.user.isAuthorized).toBeTruthy();
