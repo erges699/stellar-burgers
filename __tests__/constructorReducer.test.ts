@@ -2,13 +2,13 @@ import { expect, test, describe } from '@jest/globals';
 import constructorReducer, {
   addIngredient,
   removeIngredient,
-  moveIngredientDown,
-  moveIngredientUp,
+  downIngredient,
+  upIngredient,
   constructorInitialState
-} from './constructorSlice';
-import type { constructorState } from './constructorSlice';
+} from '../src/services/slices/constructorSlice';
+import type { TConstructorState } from '../src/services/slices/constructorSlice';
 import { nanoid } from '@reduxjs/toolkit';
-import { TConstructorIngredient } from '@utils-types';
+import { TConstructorIngredient } from '../src/utils/types';
 
 jest.mock('@reduxjs/toolkit', () => ({
   ...jest.requireActual('@reduxjs/toolkit'),
@@ -16,7 +16,9 @@ jest.mock('@reduxjs/toolkit', () => ({
 }));
 
 describe('Тест экшенов конструктора', () => {
-  const startState: constructorState = JSON.parse(JSON.stringify(constructorInitialState));
+  const startState: TConstructorState = JSON.parse(
+    JSON.stringify(constructorInitialState)
+  );
   startState.constructorItems = {
     bun: {
       _id: '643d69a5c3f7b9001cfa093c',
@@ -97,9 +99,10 @@ describe('Тест экшенов конструктора', () => {
   test('Тест экшена удаления ингредиента', () => {
     const ingredientId = '1';
     const endState: constructorState = JSON.parse(JSON.stringify(startState));
-    endState.constructorItems.ingredients = endState.constructorItems.ingredients.filter(
-      (ingredient: TConstructorIngredient) => ingredient.id != ingredientId
-    );
+    endState.constructorItems.ingredients =
+      endState.constructorItems.ingredients.filter(
+        (ingredient: TConstructorIngredient) => ingredient.id != ingredientId
+      );
 
     const newState = constructorReducer(
       startState,
@@ -123,9 +126,9 @@ describe('Тест экшенов конструктора', () => {
 
       const newState = constructorReducer(
         startState,
-        moveIngredientUp(ingredientId)
+        upIngredient(ingredientId)
       );
-      
+
       expect(newState).toEqual(endState);
     });
     test('Тест экшена перемещения ингредиента вниз', () => {
@@ -141,9 +144,9 @@ describe('Тест экшенов конструктора', () => {
 
       const newState = constructorReducer(
         startState,
-        moveIngredientDown(ingredientId)
+        downIngredient(ingredientId)
       );
-      
+
       expect(newState).toEqual(endState);
     });
   });

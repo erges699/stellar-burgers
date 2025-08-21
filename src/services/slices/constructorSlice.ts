@@ -1,7 +1,7 @@
 import { TConstructorIngredient, TIngredient } from '@utils-types';
 import { createSlice, nanoid, PayloadAction } from '@reduxjs/toolkit';
 
-type TConstructorState = {
+export type TConstructorState = {
   bun: TIngredient | null;
   ingredients: TConstructorIngredient[];
 };
@@ -57,4 +57,7 @@ export const constructorSlice = createSlice({
   }
 });
 
+export { initialState as constructorInitialState };
+export const { addIngredient, removeIngredient, downIngredient, upIngredient } =
+  constructorSlice.actions;
 export default constructorSlice.reducer;

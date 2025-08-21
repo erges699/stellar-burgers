@@ -1,6 +1,6 @@
 import { expect, test, describe } from '@jest/globals';
 import { configureStore } from '@reduxjs/toolkit';
-import ingredientsReducer, { getIngredientsThunk } from './ingredientsSlice';
+import ingredientsReducer, { getIngredientsAsync } from '../src/services/slices/ingredientsSlice';
 
 const setupStore = () =>
   configureStore({
@@ -13,7 +13,7 @@ describe('Тесты экшенов ингредиентов', () => {
   describe('Тесты экшена получения ингридиентов', () => {
     test('Тест экшена ожидания ответ после запроса ингредиентов', () => {
       const store = setupStore();
-      store.dispatch({ type: getIngredientsThunk.pending.type });
+      store.dispatch({ type: getIngredientsAsync.pending.type });
       const state = store.getState();
       expect(state.ingredients.isLoading).toBeTruthy();
       expect(state.ingredients.error).toBeNull();
@@ -22,7 +22,7 @@ describe('Тесты экшенов ингредиентов', () => {
       const store = setupStore();
       const error = 'mocked error';
       store.dispatch({
-        type: getIngredientsThunk.rejected.type,
+        type: getIngredientsAsync.rejected.type,
         error: { message: error }
       });
       const state = store.getState();
@@ -45,7 +45,7 @@ describe('Тесты экшенов ингредиентов', () => {
       };
       const store = setupStore();
       store.dispatch({
-        type: getIngredientsThunk.fulfilled.type,
+        type: getIngredientsAsync.fulfilled.type,
         payload: mockedPayload
       });
       const state = store.getState();

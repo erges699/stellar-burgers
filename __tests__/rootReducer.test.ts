@@ -1,18 +1,16 @@
 import { expect, test, describe } from '@jest/globals';
 import { rootReducer } from '../src/services/store';
-import {
-  userInitialState,
-  orderInitialState,
-  ingredientsInitialState,
-  feedInitialState,
-  constructorInitialState
-} from '@slices';
+import ingredientsInitialState from '../src/services/slices/ingredientsSlice';
+import constructorInitialState from '../src/services/slices/constructorSlice';
+import feedsInitialState from '../src/services/slices/feedsSlice';
+import ordersInitialState from '../src/services/slices/ordersSlice';
+import userInitialState from '../src/services/slices/userSlice';
 
 describe('Тест корневого редьюсера', () => {
   const initialState = {
     user: { ...userInitialState },
-    feed: { ...feedInitialState },
-    order: { ...orderInitialState },
+    feed: { ...feedsInitialState },
+    order: { ...ordersInitialState },
     ingredients: { ...ingredientsInitialState },
     constructorbg: { ...constructorInitialState }
   };
