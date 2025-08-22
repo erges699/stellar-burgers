@@ -14,7 +14,7 @@ import {
 } from '../../utils/burger-api';
 import { deleteCookie, getCookie, setCookie } from '../../utils/cookie';
 
-type TUserState = {
+export type TUserState = {
   isAuthorized: boolean;
   user: TUser | null;
   isLoading: boolean;
