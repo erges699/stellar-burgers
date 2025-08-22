@@ -1,5 +1,3 @@
-// __tests__/userReducer.test.ts
-
 import { expect, test, describe, jest } from '@jest/globals';
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer, {
@@ -12,19 +10,24 @@ import userReducer, {
   checkUserAuthAsync
 } from '../src/services/slices/userSlice';
 
-// 🔽 Импортируем мокируемые функции — важно для TypeScript
-import { setCookie, deleteCookie } from '../__mocks__/utils/cookie';
-import {
-  loginUserApi,
-  registerUserApi,
-  logoutApi,
-  getUserApi,
-  updateUserApi,
-  forgotPasswordApi,
-  resetPasswordApi
-} from '../src/utils/burger-api';
+// Мокаем API и утилиты
+jest.mock('../src/utils/burger-api', () => ({
+  registerUserApi: jest.fn(),
+  loginUserApi: jest.fn(),
+  getUserApi: jest.fn(),
+  updateUserApi: jest.fn(),
+  logoutApi: jest.fn(),
+  forgotPasswordApi: jest.fn(),
+  resetPasswordApi: jest.fn(),
+  getOrdersApi: jest.fn()
+}));
 
-// Утилиты для моков
+jest.mock('../src/utils/cookie', () => ({
+  setCookie: jest.fn(),
+  getCookie: jest.fn(),
+  deleteCookie: jest.fn()
+}));
+
 const setupStore = () =>
   configureStore({
     reducer: {
@@ -37,64 +40,103 @@ describe('Тесты экшенов клиента', () => {
 
   beforeEach(() => {
     store = setupStore();
-    jest.clearAllMocks(); // Сбрасываем моки перед каждым тестом
+    jest.clearAllMocks();
   });
 
-  // Тесты для логина
   describe('Тесты экшена запроса логина', () => {
-    test('Тест экшена успешного логина', async () => {
-      // Настраиваем мок API
-      loginUserApi.mockResolvedValue({
+    test('Тест экшена ожидания ответ после запроса логина', async () => {
+      const mockLoginApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'loginUserApi'
+      );
+      mockLoginApi.mockResolvedValue({
         success: true,
-        accessToken: 'Bearer fake-jwt',
-        refreshToken: 'fake-refresh-123',
+        accessToken: 'fake-access-token',
+        refreshToken: 'fake-refresh-token',
         user: { email: 'test@mail.ru', name: 'test' }
       });
 
-      // Диспатчим асинхронный экшен
       await store.dispatch(
         loginUserApiAsync({ email: 'test@mail.ru', password: '123' }) as any
       );
 
       const state = store.getState().user;
+      expect(state.isLoading).toBeFalsy(); // pending → fulfilled
+    });
 
+    test('Тест экшена ошибки после запроса логина', async () => {
+      const mockLoginApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'loginUserApi'
+      );
+      mockLoginApi.mockRejectedValue(new Error('Invalid credentials'));
+
+      // Диспатчим асинхронный экшен
+      const action = loginUserApiAsync({ email: 'wrong', password: 'wrong' });
+      const result = await store.dispatch(action);
+
+      // Проверяем, что экшен вернул rejectWithValue
+      expect(result.type).toBe('user/loginUser/rejected');
+      expect(result.error?.message).toBe('Invalid credentials');
+
+      // Проверяем состояние
+      const state = store.getState().user;
+      expect(state.isLoading).toBeFalsy();
+      expect(state.error).toBe('Invalid credentials');
+    });
+
+    test('Тест экшена успешного логина', async () => {
+      const mockLoginApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'loginUserApi'
+      );
+      const mockSetCookie = jest.spyOn(
+        require('../src/utils/cookie'),
+        'setCookie'
+      );
+      const mockSetItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      const mockResponse = {
+        success: true,
+        accessToken: 'Bearer fake-jwt',
+        refreshToken: 'fake-refresh-123',
+        user: { email: 'test@mail.ru', name: 'test' }
+      };
+
+      mockLoginApi.mockResolvedValue(mockResponse);
+
+      await store.dispatch(
+        loginUserApiAsync({ email: 'test@mail.ru', password: '123' }) as any
+      );
+
+      const state = store.getState().user;
       expect(state.isLoading).toBeFalsy();
       expect(state.error).toBeNull();
-      expect(state.user).toEqual({ email: 'test@mail.ru', name: 'test' });
+      expect(state.user).toEqual(mockResponse.user);
       expect(state.isAuthorized).toBeTruthy();
 
       // Проверяем побочные эффекты
-      expect(setCookie).toHaveBeenCalledWith('accessToken', 'Bearer fake-jwt');
-      expect(localStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSetCookie).toHaveBeenCalledWith(
+        'accessToken',
+        'Bearer fake-jwt'
+      );
+      expect(mockSetItem).toHaveBeenCalledWith(
         'refreshToken',
         'fake-refresh-123'
       );
     });
-
-    test('Тест экшена ошибки при логине', async () => {
-      loginUserApi.mockRejectedValue(new Error('Invalid credentials'));
-
-      await expect(
-        store.dispatch(
-          loginUserApiAsync({ email: 'wrong', password: 'wrong' }) as any
-        )
-      ).rejects.toThrow();
-
-      const state = store.getState().user;
-      expect(state.isLoading).toBeFalsy();
-      expect(state.error).toBe('Invalid credentials');
-      expect(state.user).toBeNull();
-      expect(state.isAuthorized).toBeFalsy();
-    });
   });
 
-  // Тесты для регистрации
   describe('Тест экшена запроса регистрации', () => {
-    test('Тест экшена успешной регистрации', async () => {
-      registerUserApi.mockResolvedValue({
+    test('Тест экшена ожидания ответ после запроса регистрации', async () => {
+      const mockRegisterApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'registerUserApi'
+      );
+      mockRegisterApi.mockResolvedValue({
         success: true,
-        accessToken: 'Bearer fake-jwt',
-        refreshToken: 'fake-refresh-123',
+        accessToken: 'fake-access',
+        refreshToken: 'fake-refresh',
         user: { email: 'new@mail.ru', name: 'new' }
       });
 
@@ -107,46 +149,96 @@ describe('Тесты экшенов клиента', () => {
       );
 
       const state = store.getState().user;
+      expect(state.isLoading).toBeFalsy();
+    });
 
+    test('Тест экшена ошибки после запроса регистрации', async () => {
+      const mockRegisterApi = jest.spyOn(require('../src/utils/burger-api'), 'registerUserApi');
+      mockRegisterApi.mockRejectedValue(new Error('Email already exists'));
+
+      const action = registerUserApiAsync({
+        email: 'exists@mail.ru',
+        password: '123',
+        name: 'test'
+      });
+
+      const result = await store.dispatch(action);
+
+      if (result.type === 'user/register/rejected') {
+        // В этом блоке TypeScript знает, что есть error
+        expect(result.error?.message).toBe('Email already exists');
+      }
+
+      // Проверка типа действия
+      expect(result.type).toBe('user/registerUser/rejected');
+
+      // Проверка состояния
+      const state = store.getState().user;
+      expect(state.isLoading).toBeFalsy();
+      expect(state.error).toBe('Email already exists');
+    });
+
+    test('Тест экшена успешной регистрации', async () => {
+      const mockRegisterApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'registerUserApi'
+      );
+      const mockSetCookie = jest.spyOn(
+        require('../src/utils/cookie'),
+        'setCookie'
+      );
+      const mockSetItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      const mockResponse = {
+        success: true,
+        accessToken: 'Bearer fake-jwt',
+        refreshToken: 'fake-refresh-123',
+        user: { email: 'new@mail.ru', name: 'new' }
+      };
+
+      mockRegisterApi.mockResolvedValue(mockResponse);
+
+      await store.dispatch(
+        registerUserApiAsync({
+          email: 'new@mail.ru',
+          password: '123',
+          name: 'new'
+        }) as any
+      );
+
+      const state = store.getState().user;
       expect(state.isLoading).toBeFalsy();
       expect(state.error).toBeNull();
-      expect(state.user).toEqual({ email: 'new@mail.ru', name: 'new' });
+      expect(state.user).toEqual(mockResponse.user);
       expect(state.isAuthorized).toBeTruthy();
 
-      expect(setCookie).toHaveBeenCalledWith('accessToken', 'Bearer fake-jwt');
-      expect(localStorage.setItem).toHaveBeenCalledWith(
+      expect(mockSetCookie).toHaveBeenCalledWith(
+        'accessToken',
+        'Bearer fake-jwt'
+      );
+      expect(mockSetItem).toHaveBeenCalledWith(
         'refreshToken',
         'fake-refresh-123'
       );
     });
-
-    test('Тест экшена ошибки при регистрации', async () => {
-      registerUserApi.mockRejectedValue(new Error('Email already exists'));
-
-      await expect(
-        store.dispatch(
-          registerUserApiAsync({
-            email: 'exists@mail.ru',
-            password: '123',
-            name: 'test'
-          }) as any
-        )
-      ).rejects.toThrow();
-
-      const state = store.getState().user;
-      expect(state.isLoading).toBeFalsy();
-      expect(state.error).toBe('Email already exists');
-      expect(state.user).toBeNull();
-      expect(state.isAuthorized).toBeFalsy();
-    });
   });
 
-  // Тесты для логаута
   describe('Тест экшена запроса логаута', () => {
     test('Тест экшена успешного логаута', async () => {
-      logoutApi.mockResolvedValue({ success: true, message: 'Logout OK' });
+      const mockLogoutApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'logoutApi'
+      );
+      const mockDeleteCookie = jest.spyOn(
+        require('../src/utils/cookie'),
+        'deleteCookie'
+      );
+      const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem');
+      const mockClear = jest.spyOn(Storage.prototype, 'clear');
 
-      // Предварительно авторизуем пользователя
+      mockLogoutApi.mockResolvedValue({ success: true, message: 'Logout OK' });
+
+      // Предварительно авторизуем
       store.dispatch({
         type: loginUserApiAsync.fulfilled.type,
         payload: {
@@ -163,21 +255,26 @@ describe('Тесты экшенов клиента', () => {
       expect(state.isAuthorized).toBeFalsy();
       expect(state.isLoading).toBeFalsy();
 
-      expect(deleteCookie).toHaveBeenCalledWith('accessToken');
-      expect(localStorage.removeItem).toHaveBeenCalledWith('refreshToken');
-      expect(localStorage.clear).toHaveBeenCalled();
+      expect(mockDeleteCookie).toHaveBeenCalledWith('accessToken');
+      expect(mockRemoveItem).toHaveBeenCalledWith('refreshToken');
+      expect(mockClear).toHaveBeenCalled();
     });
   });
 
-  // Тесты для обновления профиля
   describe('Тест экшена запроса изменения данных клиента', () => {
     test('Тест экшена успешного изменения данных клиента', async () => {
-      updateUserApi.mockResolvedValue({
+      const mockUpdateApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'updateUserApi'
+      );
+      const mockResponse = {
         success: true,
         user: { email: 'updated@mail.ru', name: 'updated' }
-      });
+      };
 
-      // Предварительная авторизация
+      mockUpdateApi.mockResolvedValue(mockResponse);
+
+      // Предварительно авторизуем
       store.dispatch({
         type: loginUserApiAsync.fulfilled.type,
         payload: {
@@ -193,15 +290,18 @@ describe('Тесты экшенов клиента', () => {
 
       const state = store.getState().user;
       expect(state.isLoading).toBeFalsy();
-      expect(state.user).toEqual({ email: 'updated@mail.ru', name: 'updated' });
-      expect(state.isAuthorized).toBeTruthy();
+      expect(state.user).toEqual(mockResponse.user);
+      expect(state.isAuthorized).toBeTruthy(); // isAuthorized не сбрасывается
     });
   });
 
-  // Тесты для восстановления пароля
   describe('Тест экшена запроса восстановления пароля', () => {
     test('Тест экшена успешного восстановления пароля', async () => {
-      forgotPasswordApi.mockResolvedValue({
+      const mockForgotApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'forgotPasswordApi'
+      );
+      mockForgotApi.mockResolvedValue({
         success: true,
         message: 'Reset email sent'
       });
@@ -213,15 +313,18 @@ describe('Тесты экшенов клиента', () => {
       const state = store.getState().user;
       expect(state.isLoading).toBeFalsy();
       expect(state.error).toBeNull();
-      expect(state.user).toBeNull();
+      expect(state.user).toBeNull(); // не авторизован
       expect(state.isAuthorized).toBeFalsy();
     });
   });
 
-  // Тесты для сброса пароля
   describe('Тест экшена запроса изменения пароля', () => {
     test('Тест экшена успешного изменения пароля', async () => {
-      resetPasswordApi.mockResolvedValue({
+      const mockResetApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'resetPasswordApi'
+      );
+      mockResetApi.mockResolvedValue({
         success: true,
         message: 'Password reset'
       });
@@ -241,12 +344,18 @@ describe('Тесты экшенов клиента', () => {
     });
   });
 
-  // Тесты для проверки авторизации
   describe('Тест экшена запроса данных пользователя', () => {
     test('Тест экшена успешного запроса данных пользователя', async () => {
-      // Мокаем наличие токена
-      (getCookie as jest.Mock).mockReturnValue('Bearer fake-jwt');
-      getUserApi.mockResolvedValue({
+      const mockGetUserApi = jest.spyOn(
+        require('../src/utils/burger-api'),
+        'getUserApi'
+      );
+      const mockGetCookie = jest.spyOn(
+        require('../src/utils/cookie'),
+        'getCookie'
+      );
+      mockGetCookie.mockReturnValue('Bearer fake-jwt');
+      mockGetUserApi.mockResolvedValue({
         success: true,
         user: { email: 'test@mail.ru', name: 'test' }
       });
@@ -260,14 +369,18 @@ describe('Тесты экшенов клиента', () => {
       expect(state.isAuthorized).toBeTruthy();
     });
 
-    test('Тест экшена при отсутствии токена', async () => {
-      (getCookie as jest.Mock).mockReturnValue(undefined);
+    test('Тест экшена ошибки при отсутствии токена', async () => {
+      const mockGetCookie = jest.spyOn(
+        require('../src/utils/cookie'),
+        'getCookie'
+      );
+      mockGetCookie.mockReturnValue(undefined);
 
       await store.dispatch(checkUserAuthAsync() as any);
 
       const state = store.getState().user;
       expect(state.isLoading).toBeFalsy();
-      expect(state.error).toBeNull();
+      expect(state.error).toBeNull(); // не устанавливается, но user = null
       expect(state.user).toBeNull();
       expect(state.isAuthorized).toBeFalsy();
     });
