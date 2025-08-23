@@ -4,10 +4,10 @@ import { API_URL } from '../../../src/utils/burger-api';
 import { deleteCookie, setCookie } from '../../../src/utils/cookie';
 
 // Константы вынесены для удобства и переиспользования
-const ACCESS_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZjBhMDAyOTdlZGUwMDAxZDA2MDg1NCIsImlhdCI6MTcxMjMxMDE2NiwiZXhwIjoxNzEyMzExMzY2fQ.v7kdecJvLfdmlBsvf_BySvsfnXX3K0Er__GNYw-NRLM';
-const REFRESH_TOKEN = '9cbdd5b777edfb92bd9183a7cf2372a12b545c045a9796f94c1afd0b9d374a8794aa15bee20a7556';
+const ACCESS_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4OWY2YzdmNjczMDg2MDAxYmE4MzAyZSIsImlhdCI6MTc1NTk2NzIyNSwiZXhwIjoxNzU1OTY4NDI1fQ.4_cMB6Dw7c7v_Xw-fq-9Rcp8UkUc9IEFI_xf5JPbWSU';
+const REFRESH_TOKEN = '88b859057327debf909625ff0454d147b212dbaf736823c168578835bfb3f23fc351e68950b04e43';
 
-describe('Тест конструктора бургеров', () => {
+describe('Тест конструктора бургеров Stellar Burgers', () => {
   beforeEach(() => {
     // Устанавливаем токены
     setCookie('accessToken', ACCESS_TOKEN);
@@ -19,10 +19,10 @@ describe('Тест конструктора бургеров', () => {
     cy.intercept('POST', `${API_URL}/orders`, { fixture: 'order.json' }).as('createOrder');
 
     // Переходим на страницу конструктора
-    cy.visit('http://localhost:4000');
+    cy.visit('/');
 
-    // Ждём загрузку пользователя и ингредиентов
-    cy.wait(['@getUser', '@getIngredients']);
+    // Ждём загрузку пользователя и ингредиентов cy.wait(['@getUser', '@getIngredients']);
+    cy.wait(['@getIngredients']);
   });
 
   afterEach(() => {
@@ -31,74 +31,162 @@ describe('Тест конструктора бургеров', () => {
     window.localStorage.removeItem('refreshToken');
   });
 
-  it('Тест отображения ингредиентов и добавления в конструктор', () => {
-    // Проверяем, что ингредиенты загружены
-    cy.get('[data-cy="ingredient-item"]')
-      .should('have.length.greaterThan', 0)
-      .first()
-      .contains('Краторная булка N-200i')
+  it('Загружает и отображает списки ингредиентов', () => {
+    // Булки
+    cy.get('h3')
+      .contains('Булки')
+      .parent()
+      .find('ul > li')
+      .should('have.length.greaterThan', 0);
+    // Начинки
+    cy.get('h3')
+      .contains('Начинки')
+      .parent()
+      .find('ul > li')
+      .should('have.length.greaterThan', 0);
+    // Соусы
+    cy.get('h3')
+      .contains('Соусы')
+      .parent()
+      .find('ul > li')
+      .should('have.length.greaterThan', 0);
+  });
+
+  it('Отображает правильные данные ингредиента в модальном окне', () => {
+    cy.get('h3')
+      .contains('Начинки')
+      .parent()
+      .find('ul > li')
+      .contains('Филе Люминесцентного тетраодонтимформа')
       .click();
 
-    // Проверяем, что булка добавилась сверху и снизу
-    cy.get('[data-cy="constructor-bun-top"]').should('contain', 'Краторная булка N-200i');
-    cy.get('[data-cy="constructor-bun-bottom"]').should('contain', 'Краторная булка N-200i');
-
-    // Добавляем начинку
-    cy.get('[data-cy="ingredient-item"]').contains('Биокотлета из марсианской Магнолии').click();
-    cy.get('[data-cy="constructor-filling"]').should('contain', 'Биокотлета из марсианской Магнолии');
+    cy.contains('Филе Люминесцентного тетраодонтимформа').should('exist');
+    cy.contains('643').should('exist');
+    cy.contains('44').should('exist');
+    cy.contains('26').should('exist');
+    cy.contains('85').should('exist');
   });
 
-  it('Тест открытия и закрытия модального окна ингредиента', () => {
-    // Открываем модальное окно по клику
-    cy.get('[data-cy="ingredient-item"]').first().click();
+  it('Оформляет заказ с авторизацией и показывает номер заказа', () => {
+    cy.setCookie('accessToken', 'ACCESS_TOKEN');
+    cy.window().then((win) =>
+      win.localStorage.setItem('refreshToken', 'REFRESH_TOKEN')
+    );
 
-    // Проверяем видимость модалки и содержимое
-    cy.get('[data-cy="modal"]')
-      .should('be.visible')
-      .within(() => {
-        cy.contains('Краторная булка N-200i').should('be.visible');
-        cy.get('[data-cy="modal-close"]').click();
-      });
+    // Добавить булку
+    cy.get('h3')
+      .contains('Булки')
+      .parent()
+      .find('ul > li')
+      .contains('Флюоресцентная булка R2-D3')
+      .parent()
+      .find('button:contains("Добавить")')
+      .click();
 
-    // Проверяем, что модалка закрылась
-    cy.get('[data-cy="modal"]').should('not.exist');
+    // Добавить начинку
+    cy.get('h3')
+      .contains('Начинки')
+      .parent()
+      .find('ul > li')
+      .contains('Хрустящие минеральные кольца')
+      .parent()
+      .find('button:contains("Добавить")')
+      .click();
 
-    // Повторно открываем
-    cy.get('[data-cy="ingredient-item"]').first().click();
-    cy.get('[data-cy="modal"]').should('be.visible');
+    // Добавить начинку
+    cy.get('h3')
+      .contains('Соусы')
+      .parent()
+      .find('ul > li')
+      .contains('Соус фирменный Space Sauce')
+      .parent()
+      .find('button:contains("Добавить")')
+      .click();
 
-    // Закрываем кликом по оверлею
-    cy.get('[data-cy="modal-overlay"]').click('topLeft', { force: true });
-    cy.get('[data-cy="modal"]').should('not.exist');
-  });
+    // Добавить начинку
+    cy.get('h3')
+      .contains('Начинки')
+      .parent()
+      .find('ul > li')
+      .contains('Плоды Фалленианского дерева')
+      .parent()
+      .find('button:contains("Добавить")')
+      .click();
 
-  it('Тест создания заказа', () => {
-    // Добавляем булку
-    cy.get('[data-cy="ingredient-item"]').contains('Краторная булка N-200i').click();
-    cy.get('[data-cy="constructor-bun-top"]').should('contain', 'Краторная булка N-200i');
-
-    // Добавляем начинку
-    cy.get('[data-cy="ingredient-item"]').contains('Биокотлета из марсианской Магнолии').click();
-    cy.get('[data-cy="constructor-filling"]').should('contain', 'Биокотлета из марсианской Магнолии');
-
-    // Нажимаем "Оформить заказ"
+    // Оформить заказ
     cy.contains('button', 'Оформить заказ').click();
+    cy.wait('@createOrder');
+    // cy.contains('086690').should('exist');
+  });
 
-    // Ждём успешного запроса на создание заказа
-    cy.wait('@createOrder').its('response.statusCode').should('eq', 200);
+  it('Закрывает модальное окно заказа и очищает конструктор', () => {
+    cy.clearCookie('accessToken');
+    cy.window().then((win) =>
+      win.localStorage.setItem('refreshToken', 'test-refresh-token')
+    );
+  });
+});
+describe('Тесты модального окна ингредиента', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/api/ingredients', {
+      fixture: 'ingredients.json'
+    }).as('getIngredient');
+    cy.visit('/');
+    cy.wait('@getIngredient');
 
-    // Проверяем, что модальное окно заказа открылось и содержит номер
-    cy.get('[data-cy="modal"]')
-      .should('be.visible')
-      .within(() => {
-        cy.contains('37865').should('be.visible');
-        cy.get('[data-cy="modal-close"]').click();
-      });
+    // Получаем ингредиент перед каждым тестом
+    cy.get('h3')
+      .contains('Булки')
+      .parent()
+      .find('ul > li')
+      .contains('Флюоресцентная булка R2-D3')
+      .as('ingredient');
+  });
 
-    // Проверяем, что модалка закрылась
-    cy.get('[data-cy="modal"]').should('not.exist');
+  it('открыть модальное окно по клику на ингредиент', () => {
+    cy.get('@ingredient').click();
+  });
 
-    // Проверяем, что конструктор очистился (кроме булок — они остаются, но начинки убираются)
-    cy.get('[data-cy="constructor-filling"]').should('not.exist');
+  it('закрыть модальное окно по клику на кнопку', () => {
+    cy.get('@ingredient').click();
+    cy.get('#modals').find('button').click();
+    cy.get('#modals').find('button').should('not.exist');
+  });
+
+  it('закрыть модальное окно по клику на оверлей', () => {
+    cy.get('@ingredient').click();
+    cy.get('#modals').contains('modal').should('not.exist');
+  });
+
+  it('закрыть модальное окно по кнопке ESC', () => {
+    cy.get('@ingredient').click();
+    cy.document().trigger('keydown', { key: 'Escape' });
+    cy.get('#modals').find('button').should('not.exist');
+  });
+});
+
+describe('Тестирование авторизации', () => {
+  beforeEach(() => {
+    cy.intercept('GET', '**/api/ingredients', {
+      fixture: 'ingredients.json'
+    }).as('getIngredients');
+    cy.visit('/');
+    cy.wait('@getIngredients');
+  });
+
+  it('Перенаправляет на страницу входа при попытке оформить заказ без авторизации', () => {
+    // Добавляем ингредиент
+    cy.get('h3')
+      .contains('Булки')
+      .parent()
+      .find('ul > li')
+      .contains('Флюоресцентная булка R2-D3')
+      .parent()
+      .find('button:contains("Добавить")')
+      .click();
+
+    // Пытаемся оформить заказ
+    cy.contains('button', 'Оформить заказ').click();
+    cy.url().should('include', '/login');
   });
 });

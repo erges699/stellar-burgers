@@ -1,6 +1,5 @@
 import { expect, test, describe } from '@jest/globals';
 import constructorReducer, {
-  addBun,
   addIngredient,
   removeIngredient,
   upIngredient,
@@ -84,7 +83,7 @@ describe('Тест редьюсера конструктора бургера', 
         image_large: 'https://code.s3.yandex.net/react/code/bun-01-large.png'
       };
 
-      const newState = constructorReducer(startState, addBun(newBun));
+      const newState = constructorReducer(startState, addIngredient(newBun));
 
       expect(nanoid).not.toHaveBeenCalled();
       expect(newState.bun?.name).toBe(newBun.name);

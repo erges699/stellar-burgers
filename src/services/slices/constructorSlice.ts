@@ -16,16 +16,26 @@ export const constructorSlice = createSlice({
   initialState,
   selectors: {},
   reducers: {
-    addBun: (state, action: PayloadAction<TConstructorIngredient>) => {
-      state.bun = action.payload;
-    },
     addIngredient: {
-      reducer: (state, action: PayloadAction<TConstructorIngredient>) => {
-        state.ingredients.push(action.payload);
+      prepare: (ingredient: TIngredient) => {
+        const payload =
+          ingredient.type === 'bun'
+            ? ingredient
+            : { ...ingredient, id: nanoid() };
+
+        return { payload };
       },
-      prepare: (ingredient: TIngredient) => ({
-        payload: { ...ingredient, id: nanoid() }
-      })
+      reducer: (
+        state,
+        action: PayloadAction<TIngredient | TConstructorIngredient>
+      ) => {
+        if (action.payload.type === 'bun') {
+          state.bun = action.payload;
+        } else {
+          // Утверждаем, что у начинки есть id
+          state.ingredients.push(action.payload as TConstructorIngredient);
+        }
+      }
     },
     removeIngredient: (state, action: PayloadAction<string>) => {
       state.ingredients = state.ingredients.filter(
@@ -58,7 +68,7 @@ export const constructorSlice = createSlice({
 
 // export { initialState as constructorInitialState };
 export const {
-  addBun,
+  // addBun,
   addIngredient,
   removeIngredient,
   downIngredient,
