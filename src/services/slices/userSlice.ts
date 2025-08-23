@@ -232,5 +232,7 @@ export const userSlice = createSlice({
   }
 });
 
-export { initialState as userInitialState };
+// export { initialState as userInitialState };
 export default userSlice.reducer;
+export const userActions = userSlice.actions;
+export const userInitialState = userSlice.getInitialState;

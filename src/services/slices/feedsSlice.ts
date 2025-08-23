@@ -44,5 +44,12 @@ export const feedsSlice = createSlice({
   }
 });
 
-export { initialState as ordersInitialState };
+// export { initialState as ordersInitialState };
 export default feedsSlice.reducer;
+export const feedsActions = feedsSlice.actions;
+export const feedsInitialState = feedsSlice.getInitialState;
+export const selectFeeds = (state: { feed: TFeedsState }) => state.feed;
+export const selectFeedsOrders = (state: { feed: TFeedsState }) => state.feed.orders;
+export const selectFeedsTotal = (state: { feed: TFeedsState }) => state.feed.total;
+export const selectFeedsTotalToday = (state: { feed: TFeedsState }) => state.feed.totalToday;
+export const selectFeedsLoading = (state: { feed: TFeedsState }) => state.feed.isLoading;
