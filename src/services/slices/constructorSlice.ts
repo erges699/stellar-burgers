@@ -16,7 +16,7 @@ export const constructorSlice = createSlice({
   initialState,
   selectors: {},
   reducers: {
-    addBun: (state, action: PayloadAction<TIngredient>) => {
+    addBun: (state, action: PayloadAction<TConstructorIngredient>) => {
       state.bun = action.payload;
     },
     addIngredient: {
