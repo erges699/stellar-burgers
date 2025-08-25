@@ -22,3 +22,19 @@ npm run start
 ## Важно:
 
 Для корректной работы запросов к серверу необходимо добавить переменную BURGER_API_URL в окружение. Сама ссылка находится в файле `.env.example`.
+
+## Запуск тестов Jest
+
+```bash
+npm run test
+```
+
+## Для запуска тестов Cypress нужны два терминала
+
+```bash
+npm run start
+```
+
+```bash
+npm run cypress:open
+```
